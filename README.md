@@ -2,7 +2,7 @@
 
 Practice exam for **BS 7671:2018+A4:2026** (IET Wiring Regulations, 18th Edition), in the style of the City & Guilds 2382-22 exam.
 
-- **122 original questions** across Parts 1–8 and the Appendices. 21 of them are built on SVG wiring schematics: earthing systems, the earth fault loop, ring tests, bathroom zones, bonding, selectivity, safe zones, 110 V CTE and more.
+- **124 original questions** across Parts 1–8 and the Appendices. 21 of them are built on SVG wiring schematics: earthing systems, the earth fault loop, ring tests, bathroom zones, bonding, selectivity, safe zones, 110 V CTE and more.
 - **Modes:** full mock (60 questions weighted by Part, 2 h timer, 60% pass mark, results at the end), quick practice (15 questions with instant explanations), schematics drill, and practice by Part.
 - **Results:** score, breakdown by Part, and a review list filtered by all / incorrect / flagged answers, each with the regulation to look up.
 - An attempt in progress and the recent scores are saved in the browser (localStorage).
