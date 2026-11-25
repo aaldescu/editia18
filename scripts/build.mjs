@@ -3,7 +3,7 @@
 //   dist/fragment.html body-only page with everything inlined (used for the claude.ai preview)
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 const src = (f) => readFileSync(new URL('../src/' + f, import.meta.url), 'utf8');
-const scripts = ['schematics.js', 'questions.js', 'app.js']
+const scripts = ['schematics.js', 'questions.js', 'evidence.js', 'app.js']
   .map((f) => `<script>\n${src(f).replace(/<\/script/gi, '<\\/script')}\n</script>`).join('\n');
 const fragment = src('index.html').replace('<!--SCRIPTS-->', scripts);
 const full = `<!doctype html>

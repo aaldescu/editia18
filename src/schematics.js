@@ -118,10 +118,10 @@
     if (p.hide === 'z1h') b += q(60, 160);
     b += dim(300, 52, 348, 52, '', 0, 0) + (p.hide === 'z2w' ? q(324, 36) : T(324, 44, '0.6 m', 'dl', 'middle'));
     if (p.socket) {
-      // 3 m is measured from the boundary of zone 1 (x = 300), at the same 80 px/m scale
-      b += `<rect x="523" y="150" width="34" height="26" rx="3" class="bx sock"/>` + T(540, 167, '13A', 'sm', 'middle') +
-        K([[300, 186], [300, 206]], 'thin') + K([[540, 176], [540, 206]], 'thin') +
-        dim(300, 200, 540, 200, '', 0, 0) + (p.hide === 'sock' ? q(440, 188) : T(440, 192, '3 m', 'dl', 'middle')) +
+      // 2.5 m (A2:2022) is measured from the boundary of zone 1 (x = 300), at the same 80 px/m scale
+      b += `<rect x="483" y="150" width="34" height="26" rx="3" class="bx sock"/>` + T(500, 167, '13A', 'sm', 'middle') +
+        K([[300, 186], [300, 206]], 'thin') + K([[500, 176], [500, 206]], 'thin') +
+        dim(300, 200, 500, 200, '', 0, 0) + (p.hide === 'sock' ? q(420, 188) : T(420, 192, '2.5 m', 'dl', 'middle')) +
         T(306, 184, 'zone 1 boundary', 'sm');
     }
     return svg(640, 280, b, 'Bathroom zones elevation');

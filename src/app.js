@@ -19,6 +19,29 @@
   let run = null; // current attempt
   let tick = null;
 
+  /* ----- evidence: how each answer was checked ----- */
+  const PROOF_LABEL = { S: 'Source-checked', C: 'Calculated', U: 'Not independently checked' };
+  const evidenceOf = (q) => (window.EVIDENCE && window.evidenceKey && window.EVIDENCE[window.evidenceKey(q)]) || { t: 'U', s: [], w: '' };
+  function proofHTML(q) {
+    const ev = evidenceOf(q);
+    const links = ev.s.map((k) => (window.SOURCES || {})[k]).filter(Boolean)
+      .map((s) => `<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.n)}</a>`).join('');
+    return `<div class="proof"><span class="chip pf-${ev.t}">${PROOF_LABEL[ev.t]}</span>` +
+      (ev.w ? `<span class="work num">${esc(ev.w)}</span>` : '') +
+      (links ? `<span class="srcs">${links}</span>` : ev.t === 'U' ? `<span class="srcs muted">No outside source found yet. Check it in your book.</span>` : '') +
+      `</div>`;
+  }
+  const CHANGES = [
+    'Bathroom socket-outlets: distance from zone 1 corrected from 3 m to 2.5 m (changed by Amendment 2:2022). Diagram redrawn.',
+    'Insulation testing with SPDs: replaced the old "reduce to 250 V" rule with the current two-stage test (643.3.3).',
+    'Disconnection times: Table 41.1 covers final circuits up to 63 A with socket-outlets, not only 32 A. Explanations fixed.',
+    'Surge protection: explanation updated to the current 443.4.1 wording.',
+    'Appendix 15: radial floor-area question replaced. Those figures are in the IET On-Site Guide, not in BS 7671.',
+    'RCD selectivity: added the 3:1 ratio and why a higher mA rating alone does not work.',
+    'EV charging: the dedicated-circuit rule is referenced to the On-Site Guide, as it has no single regulation number.',
+    'Zone 1 height: now explained as 2.25 m or the highest fixed shower head, whichever is higher.'
+  ];
+
   /* ----- building an attempt ----- */
   function pick(mode, part) {
     if (mode === 'mock') {
@@ -85,16 +108,56 @@
         </div>
         <h2 class="sec">Recent attempts</h2>
         ${hist.length ? `<table class="hist"><thead><tr><th>Date</th><th>Mode</th><th>Score</th><th>Result</th></tr></thead><tbody>${hist.slice(0, 8).map((h) => `<tr><td>${new Date(h.at).toLocaleDateString()}</td><td>${esc(h.mode)}</td><td class="num">${h.score}/${h.total} · ${Math.round(h.score / h.total * 100)}%</td><td><span class="chip ${h.score / h.total >= PASS ? 'ok' : 'bad'}">${h.score / h.total >= PASS ? 'Pass' : 'Below 60%'}</span></td></tr>`).join('')}</tbody></table>` : `<p class="muted">No attempts yet. Finished attempts appear here, saved in this browser only.</p>`}
+        <h2 class="sec">How the answers were checked</h2>
+        <button class="part proof-link" id="proof"><span>${proofSummary()} See the evidence for every answer.</span><span class="cnt">Open</span></button>
         <p class="note">Questions are written for practice and are not reproduced from BS 7671. Always check the answer against your own copy of the book, as you will in the open-book exam.</p>
       </div>`;
+    $('#proof').onclick = () => renderProof('all');
     app.querySelectorAll('.mode').forEach((b) => b.onclick = () => start(b.dataset.mode));
-    app.querySelectorAll('.part').forEach((b) => b.onclick = () => start('part', b.dataset.part));
+    app.querySelectorAll('.part[data-part]').forEach((b) => b.onclick = () => start('part', b.dataset.part));
     if (resume) {
       $('#resume').onclick = () => { run = resume; renderQuestion(); };
       $('#discard').onclick = () => { store.del(LS_RUN); renderHome(); };
     }
     window.scrollTo(0, 0);
   }
+  function proofCounts() { const c = { S: 0, C: 0, U: 0 }; BANK.forEach((q) => c[evidenceOf(q).t]++); return c; }
+  function proofSummary() { const c = proofCounts(); return `${c.S} answers confirmed by published sources, ${c.C} worked calculations, ${c.U} not yet independently checked.`; }
+
+  /* ----- evidence page ----- */
+  function renderProof(filter) {
+    clearInterval(tick);
+    const c = proofCounts();
+    const list = BANK.filter((q) => filter === 'all' || evidenceOf(q).t === filter);
+    app.innerHTML = `
+      <div class="bar"><div class="bar-in"><button class="btn ghost sm" id="home">Menu</button><span class="prog"><strong>Answer evidence</strong></span></div></div>
+      <div class="wrap">
+        <h1 class="ev-h">How each answer was checked</h1>
+        <p class="muted ev-lede">Every answer was checked against BS 7671:2018+A4:2026 as described in published guidance from the IET, NICEIC, NAPIT, Electrical Safety First and others. Calculations are shown with their working. Where no outside source was found, the question is marked so you can check it in your own book.</p>
+        <div class="ev-stats">
+          <div><span class="num big">${c.S}</span><span class="chip pf-S">Source-checked</span></div>
+          <div><span class="num big">${c.C}</span><span class="chip pf-C">Calculated</span></div>
+          <div><span class="num big">${c.U}</span><span class="chip pf-U">Not independently checked</span></div>
+        </div>
+        <details class="changes"><summary>Corrections made during the review (${CHANGES.length})</summary><ul>${CHANGES.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></details>
+        <div class="rev-head"><h2 class="sec">All ${BANK.length} answers</h2>
+          <div class="seg">${[['all', 'All'], ['S', 'Sources'], ['C', 'Calculated'], ['U', 'Not checked']].map(([k, v]) => `<button class="${filter === k ? 'on' : ''}" data-f="${k}">${v}</button>`).join('')}</div>
+        </div>
+        <ol class="review">${list.map((q) => `
+          <li class="rv ev-${evidenceOf(q).t}">
+            <div class="rv-h"><span class="num">Q${q.id + 1}</span><span class="muted sm">${esc(PARTS[q.p])}</span></div>
+            <p class="rv-q">${esc(q.q)}</p>
+            ${q.s ? `<figure class="fig small">${window.renderSchematic(q.s)}</figure>` : ''}
+            <p class="ans">Answer: ${esc(q.o[0])}</p>
+            <p class="ref">Look in: ${esc(q.r)}</p>
+            ${proofHTML(q)}
+          </li>`).join('')}</ol>
+      </div>`;
+    $('#home').onclick = renderHome;
+    app.querySelectorAll('.seg button').forEach((b) => b.onclick = () => renderProof(b.dataset.f));
+    window.scrollTo(0, 0);
+  }
+
   const modeName = (m, p) => ({ mock: 'Full mock exam', quick: 'Quick practice', schem: 'Schematics drill', part: PARTS[p] || 'By Part' }[m]);
 
   /* ----- question ----- */
@@ -127,7 +190,7 @@
             return `<button class="${cls}" data-oi="${oi}" ${reveal ? 'disabled' : ''}><span class="L">${letters[pos]}</span><span>${esc(q.o[oi])}</span></button>`;
           }).join('')}
         </div>
-        ${reveal ? `<div class="explain ${it.pick === 0 ? 'ok' : 'bad'}"><strong>${it.pick === 0 ? 'Correct.' : 'Not quite. The answer is ' + letters[it.order.indexOf(0)] + '.'}</strong> ${esc(q.e)}<div class="ref">Look in: ${esc(q.r)}</div></div>` : ''}
+        ${reveal ? `<div class="explain ${it.pick === 0 ? 'ok' : 'bad'}"><strong>${it.pick === 0 ? 'Correct.' : 'Not quite. The answer is ' + letters[it.order.indexOf(0)] + '.'}</strong> ${esc(q.e)}<div class="ref">Look in: ${esc(q.r)}</div>${proofHTML(q)}</div>` : ''}
         ${run.confirm ? confirmBox() : ''}
         <div class="nav">
           <button class="btn ghost" id="prev" ${run.i === 0 ? 'disabled' : ''}>Previous</button>
@@ -215,7 +278,7 @@
               ${q.s ? `<figure class="fig small">${window.renderSchematic(q.s)}</figure>` : ''}
               ${!ok && x.pick !== null ? `<p class="yours">Your answer: ${letters[x.order.indexOf(x.pick)]}. ${esc(q.o[x.pick])}</p>` : ''}
               <p class="ans">Answer: ${letters[x.order.indexOf(0)]}. ${esc(q.o[0])}</p>
-              <p class="exp">${esc(q.e)}</p><p class="ref">Look in: ${esc(q.r)}</p>
+              <p class="exp">${esc(q.e)}</p><p class="ref">Look in: ${esc(q.r)}</p>${proofHTML(q)}
             </li>`; }).join('') : '<p class="muted">Nothing to show for this filter.</p>'}
         </ol>
       </div>`;
