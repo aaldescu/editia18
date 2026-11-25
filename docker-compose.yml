@@ -1,0 +1,7 @@
+# For Dokploy "Docker Compose" apps. For a Dokploy "Application" just pick Build Type: Dockerfile.
+services:
+  editia18:
+    build: .
+    restart: unless-stopped
+    expose:
+      - "80"

@@ -1,0 +1,35 @@
+# Editia 18 Mock Exam
+
+Practice exam for **BS 7671:2018+A4:2026** (IET Wiring Regulations, 18th Edition), in the style of the City & Guilds 2382-22 exam.
+
+- **122 original questions** across Parts 1–8 and the Appendices. 21 of them are built on SVG wiring schematics: earthing systems, the earth fault loop, ring tests, bathroom zones, bonding, selectivity, safe zones, 110 V CTE and more.
+- **Modes:** full mock (60 questions weighted by Part, 2 h timer, 60% pass mark, results at the end), quick practice (15 questions with instant explanations), schematics drill, and practice by Part.
+- **Results:** score, breakdown by Part, and a review list filtered by all / incorrect / flagged answers, each with the regulation to look up.
+- An attempt in progress and the recent scores are saved in the browser (localStorage).
+
+The questions are written for practice and are not reproduced from BS 7671. Check every answer against your own copy of the book.
+
+## Project layout
+
+```
+src/index.html      page shell + styles (theme-aware, light/dark)
+src/schematics.js   SVG schematic generators
+src/questions.js    question bank (first option = correct, shuffled at runtime)
+src/app.js          exam engine
+scripts/build.mjs   inlines everything into dist/index.html
+```
+
+Build locally: `node scripts/build.mjs`, then open `dist/index.html`. No dependencies.
+
+To add a question, append an entry to `src/questions.js`:
+`{ p: 'P4', q: '…', o: ['correct', 'wrong', 'wrong', 'wrong'], e: 'explanation', r: 'where to look', s: { type: 'loop' } }`
+
+## Deploy on Dokploy
+
+1. In Dokploy: **Create Project → Create Service → Application**.
+2. Provider: **GitHub**. Repository `aaldescu/editia18`, branch `ccr-b6baea71-gsli40` (or `main` once merged).
+3. Build Type: **Dockerfile** (path `Dockerfile`, context `.`).
+4. **Domains:** add your domain (or generate a traefik.me one), container port **80**, enable HTTPS.
+5. **Deploy**. The container exposes `/healthz` for health checks.
+
+Or use **Create Service → Compose** with the included `docker-compose.yml`.
